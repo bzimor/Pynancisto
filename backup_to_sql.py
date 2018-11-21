@@ -1,117 +1,106 @@
+import os
+import glob
 import gzip
-from Databases import *
+import database as db
 from collections import OrderedDict
 
+
+# Opens backup file in backups folder and creates row list
 def readFile():
-    myfile = gzip.open('20161210_172806_453.backup', 'rt').read()
-    myfile = myfile.splitlines()
-    return myfile
+    backup_files = glob.glob('backups/*.backup')
+    # get latest backup file
+    latest_backup_file = max(backup_files, key=os.path.getctime)
+    if latest_backup_file:
+        myfile = gzip.open(latest_backup_file, 'rt').read()
+        rows = myfile.splitlines()
+        return rows
+    return False
 
-def getTableList():
-    myfile = readFile()
-    tableList = sorted(list(set([word.replace('$ENTITY:','') for word in myfile if word.startswith('$ENTITY')])))
-    return tableList
 
-def getTableItems(n):
-    myfile = readFile()
-    tables = getTableList()
-    txt = '$ENTITY:' + tables[n-1]
-    chk = False
-    chk2 = False
+# get all Entity names
+def getEntities():
+    rows = readFile()
+    if rows:
+        entity_list = sorted(list(set([row.replace('$ENTITY:', '') for row in rows if row.startswith('$ENTITY')])))
+        return entity_list
+    return False
+
+
+# get Entity attributes and values
+def getEntityItems(n):
+    rows = readFile()
+    tables = getEntities()
+    entity_start = '$ENTITY:' + tables[n-1]
+    is_current = False
+    start = False
     itemDict = OrderedDict()
-    for word in myfile:
-        if word == txt:
-            chk = True
-            if word == '$ENTITY:category_attribute':
-                chk2 = True
+    for row in rows:
+        if row == entity_start:
+            is_current = True
+            if row == '$ENTITY:category_attribute':
+                start = True
             continue
-        if word != '$$' and chk and not word.startswith('resolved_address:') and not word.startswith('card_issuer:'):
-            if word.startswith('_id:'):
-                idnum = word[4:]
+        if row != '$$' and is_current and not row.startswith('resolved_address:') and not row.startswith('card_issuer:'):
+            # transaction id
+            if row.startswith('_id:'):
+                idnum = row[4:]
                 temdpdict = OrderedDict()
-            elif word.startswith('transaction_id:'):
-                idnum = word[15:]
+            # transaction attribute
+            elif row.startswith('transaction_id:'):
+                idnum = row[15:]
                 temdpdict = OrderedDict()
-            elif word.startswith('from_currency_id:'):
-                idnum = word[17:]
+            # currency_exchange_rate
+            elif row.startswith('from_currency_id:'):
+                idnum = row[17:]
                 temdpdict = OrderedDict()
-            elif word.startswith('category_id:') and chk2:
-                idnum = word[12:]
+            elif row.startswith('category_id:') and start:
+                idnum = row[12:]
                 temdpdict = OrderedDict()
             else:
-                templist = word.split(':')
+                templist = row.split(':')
                 temdpdict[templist[0]] = templist[1]
-                itemDict[idnum]=temdpdict
-        elif word.startswith('resolved_address:') or word.startswith('card_issuer:'):
+                itemDict[idnum] = temdpdict
+        elif row.startswith('resolved_address:') or row.startswith('card_issuer:'):
             continue
         else:
-            chk = False
-            chk2 = False
+            is_current = False
+            start = False
     return itemDict
 
-def getDictItems(s, item):
-    itemList = []
-    mydict = getTableItems(s)
-    for k, v in mydict.items():
-        for k2, v2 in mydict[k].items():
-            if k2 == item:
-                itemList.append(v2)
-    print (itemList)
 
-
-
+# writes extracted data to database
 def writeData():
-    createTables()
-    tbl = getTableList()
+    if not os.path.isfile('databases/financisto.db'):
+        db.createTables()
+    tbl = getEntities()
     tbllen = len(tbl)
     for j in range(tbllen):
-        print (tbl[j])
-        mydict = getTableItems(j+1)
+        print(tbl[j])
+        mydict = getEntityItems(j+1)
         for k, v in mydict.items():
             itemList = [k]
+            fieldlist = []
+            if tbl[j] == 'category_attribute':
+                fieldlist.append('"category_id"')
+            elif tbl[j] == 'transaction_attribute':
+                fieldlist.append('"transaction_id"')
+            elif tbl[j] == 'currency_exchange_rate':
+                fieldlist.append('"from_currency_id"')
+            else:
+                fieldlist.append('"_id"')
             for k2, v2 in mydict[k].items():
                 itemList.append(v2)
-            
-            if tbl[j] == 'transactions' and len(itemList) == 21:
-                itemList = itemList[:6] + [""] + itemList[6:]
-                itemtuple = tuple(itemList)
-                lnth = len(itemtuple)
-            elif tbl[j] == 'transactions' and len(itemList) == 23:
-                itemList = itemList[:10] + itemList[11:]
-                itemtuple = tuple(itemList)
-                lnth = len(itemtuple)
-            else:
-                itemtuple = tuple(itemList)
-                lnth = len(itemtuple)
+                fieldlist.append('"'+k2+'"')
+            fields = ', '.join(fieldlist)
+
+            values = tuple(itemList)
+            lnth = len(values)
             qrytxt = "?"
-            for i in range (lnth-1):
+            for i in range(lnth-1):
                 qrytxt = qrytxt + "," + "?"
-            
-            query = "INSERT INTO " + tbl[j] +" VALUES " + "(" + qrytxt + ")"
-            #print (qrytxt)
-            #print (itemtuple)
-            writeQuery(itemtuple, query)
 
-def writeData1():
-    #createTables()
-    tbllen = len(getTableList())
-    mydict = getTableItems(11)
-    for k, v in mydict.items():
-        itemList = [k]
-        for k2, v2 in mydict[k].items():
-             itemList.append(k2)
-                
-        itemtuple = tuple(itemList)
-        lnth = len(itemtuple)
-        if lnth == 24:
-            print (itemtuple)
-        qrytxt = "?"
-        for i in range (lnth-2):
-            qrytxt = qrytxt + "," + "?"
-                
-        query = "INSERT INTO payee VALUES (" + qrytxt + ")"
-        #print (itemtuple)
-        #writeQuery(itemtuple, query)
-        
+            query = "INSERT OR IGNORE INTO " + tbl[j] + "(" + fields + ")" + " VALUES " + "(" + qrytxt + ")"
+            db.writeQuery(values, query)
 
 
+writeData()
