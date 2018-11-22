@@ -17,90 +17,52 @@ def readFile():
     return False
 
 
-# get all Entity names
-def getEntities():
+def parseEntities():
     rows = readFile()
     if rows:
-        entity_list = sorted(list(set([row.replace('$ENTITY:', '') for row in rows if row.startswith('$ENTITY')])))
-        return entity_list
+        entities = OrderedDict()
+        entity_item = OrderedDict()
+        entity_type = ''
+        is_new_entity = False
+        for row in rows:
+            if row.startswith('$ENTITY:'):
+                entity_item = OrderedDict()
+                entity_type = row.replace('$ENTITY:', '')
+                continue
+            # End of entity attributes
+            elif row == '$$':
+                is_new_entity = True
+            else:
+                attribute = row.split(':')
+                if len(attribute) == 2:
+                    entity_item[attribute[0]] = attribute[1]
+            # Append to dict if all entity attributes parsed
+            if is_new_entity:
+                is_new_entity = False
+                if entity_type in entities.keys():
+                    entities[entity_type].append(entity_item)
+                else:
+                    entities[entity_type] = [entity_item]
+        return entities
     return False
 
 
-# get Entity attributes and values
-def getEntityItems(n):
-    rows = readFile()
-    tables = getEntities()
-    entity_start = '$ENTITY:' + tables[n-1]
-    is_current = False
-    start = False
-    itemDict = OrderedDict()
-    for row in rows:
-        if row == entity_start:
-            is_current = True
-            if row == '$ENTITY:category_attribute':
-                start = True
-            continue
-        if row != '$$' and is_current and not row.startswith('resolved_address:') and not row.startswith('card_issuer:'):
-            # transaction id
-            if row.startswith('_id:'):
-                idnum = row[4:]
-                temdpdict = OrderedDict()
-            # transaction attribute
-            elif row.startswith('transaction_id:'):
-                idnum = row[15:]
-                temdpdict = OrderedDict()
-            # currency_exchange_rate
-            elif row.startswith('from_currency_id:'):
-                idnum = row[17:]
-                temdpdict = OrderedDict()
-            elif row.startswith('category_id:') and start:
-                idnum = row[12:]
-                temdpdict = OrderedDict()
-            else:
-                templist = row.split(':')
-                temdpdict[templist[0]] = templist[1]
-                itemDict[idnum] = temdpdict
-        elif row.startswith('resolved_address:') or row.startswith('card_issuer:'):
-            continue
-        else:
-            is_current = False
-            start = False
-    return itemDict
-
-
-# writes extracted data to database
-def writeData():
+# writes parsed entities to database
+def writeEntities():
     if not os.path.isfile('databases/financisto.db'):
         db.createTables()
-    tbl = getEntities()
-    tbllen = len(tbl)
-    for j in range(tbllen):
-        print(tbl[j])
-        mydict = getEntityItems(j+1)
-        for k, v in mydict.items():
-            itemList = [k]
-            fieldlist = []
-            if tbl[j] == 'category_attribute':
-                fieldlist.append('"category_id"')
-            elif tbl[j] == 'transaction_attribute':
-                fieldlist.append('"transaction_id"')
-            elif tbl[j] == 'currency_exchange_rate':
-                fieldlist.append('"from_currency_id"')
-            else:
-                fieldlist.append('"_id"')
-            for k2, v2 in mydict[k].items():
-                itemList.append(v2)
-                fieldlist.append('"'+k2+'"')
-            fields = ', '.join(fieldlist)
-
-            values = tuple(itemList)
-            lnth = len(values)
-            qrytxt = "?"
-            for i in range(lnth-1):
-                qrytxt = qrytxt + "," + "?"
-
-            query = "INSERT OR IGNORE INTO " + tbl[j] + "(" + fields + ")" + " VALUES " + "(" + qrytxt + ")"
-            db.writeQuery(values, query)
+    entities = parseEntities()
+    if entities:
+        for entity_type, entity_list in entities.items():
+            print(entity_type)
+            for item in entity_list:
+                values = tuple(item.values())
+                fields = '", "'.join(item.keys())
+                qrytxt = '?'
+                for i in range(len(values)-1):
+                    qrytxt = qrytxt + ', ' + '?'
+                query = 'INSERT OR IGNORE INTO ' + entity_type + '("' + fields + '")' + ' VALUES ' + '(' + qrytxt + ')'
+                db.writeQuery(values, query)
 
 
-writeData()
+writeEntities()

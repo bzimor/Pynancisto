@@ -1,0 +1,40 @@
+
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        Dashboard
+    </h1>
+</div>
+<div class="col-sm-6 col-lg-6">
+  <div class="card">
+    <div class="card-header">
+      <h4 class="card-title">Accounts</h4>
+    </div>
+    <table class="table card-table">
+        {% for account in accounts %}
+      <tr>
+        {% if account[4] == 'CASH' %}
+        <td width="1"><i class="fa fa-money text-muted"></i></td>
+        {% elif account[4] == 'DEBIT_CARD' %}
+        <td width="1"><i class="fa fa-credit-card text-muted"></i></td>
+        {% else %}
+        <td width="1"><i class="fa fa-briefcase text-muted"></i></td>
+        {% endif %}
+        <td>{{ account[0] }}</td>
+        <td class="text-right"><span>{{ "{:,.2f}".format(account[1]/100).replace(',', ' ') }} {{ account[2]}}</span></td>
+        <td class="text-right">
+        {% if not account[3] %}
+            <span class="badge badge-default">Closed</span>
+        {% else %}
+            <span class="badge badge-success">Active</span>
+        {% endif %}
+        </td>
+      </tr>
+         {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

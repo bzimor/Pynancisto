@@ -1,17 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />   <title>Chart.js </title>
-    <!-- import plugin script -->   <script src='static/Chart.min.js'></script>
-</head>
-<body>
-    <h1>Flask Chart.js</h1><!-- bar chart canvas element -->
 
-    <canvas id="myChart" width="200px" height="200px"></canvas>
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        Dashboard
+    </h1>
+</div>
+<!-- <canvas id="myChart" width="200px" height="200px"></canvas>
 <script>
 var ctx = document.getElementById("myChart").getContext('2d');
 var myChart = new Chart(ctx, {
-    type: 'bar',
+    type: 'horizontalBar',
     data: {
         labels: [{% for item in labels %}
                        "{{item}}",
@@ -50,8 +51,6 @@ var myChart = new Chart(ctx, {
         }
     }
 });
-</script>
+</script> -->
 
-
-</body>
-</html>
+{% endblock %}
