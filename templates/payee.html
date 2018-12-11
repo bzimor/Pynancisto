@@ -1,0 +1,208 @@
+
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        Payees
+    </h1>
+</div>
+
+<div class="row row-cards row-deck">
+    <div class="col-lg-6 col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Income</h3>
+            </div>
+            <div class="card-body">
+                <div id="chart-bar-rotated-income"></div>
+            </div>
+        </div>
+        <script>
+        require(['c3', 'jquery'], function(c3, $) {
+            $(document).ready(function(){
+                var chart = c3.generate({
+                    bindto: '#chart-bar-rotated-income', // id of chart wrapper
+                    size: {
+                        height: 1400
+                    },
+                    data: {
+                        columns: [
+                            // each columns data
+                            ['data1', {{ income_amounts }}],
+                        ],
+                        type: 'bar', // default type of chart
+                        colors: {
+                            'data1': tabler.colors["green"],
+                        },
+                        names: {
+                            // name of each serie
+                            'data1': 'Expense',
+                        }
+                    },
+                    axis: {
+                        x: {
+                            type: 'category',
+                            // name of each category
+                            categories: [{{ income_payees|safe }}]
+                        },
+                        rotated: true,
+                    },
+                    bar: {
+                        width: 20
+                    },
+                    legend: {
+                        show: false, //hide legend
+                    },
+                    padding: {
+                        bottom: 0,
+                        top: 0
+                    },
+                    tooltip: {
+                       format: {
+                           value: function (value, ratio, id) {
+                               var format = d3.format(',');
+                               return format(value);
+                           }
+                //            value: d3.format(',') // apply this format to both y and y2
+                       }
+                   }
+                });
+            });
+        });
+        </script>
+    </div>
+
+    <div class="col-lg-6 col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Expense</h3>
+            </div>
+            <div class="card-body">
+                <div id="chart-bar-rotated-expense"></div>
+            </div>
+        </div>
+        <script>
+        require(['c3', 'jquery'], function(c3, $) {
+            $(document).ready(function(){
+                var chart = c3.generate({
+                    bindto: '#chart-bar-rotated-expense', // id of chart wrapper
+                    size: {
+                        height: 1400
+                    },
+                    data: {
+                        columns: [
+                            // each columns data
+                            ['data1', {{ expense_amounts }}],
+                        ],
+                        type: 'bar', // default type of chart
+                        colors: {
+                            'data1': tabler.colors["orange"],
+                        },
+                        names: {
+                            // name of each serie
+                            'data1': 'Expense',
+                        }
+                    },
+                    axis: {
+                        x: {
+                            type: 'category',
+                            // name of each category
+                            categories: [{{ expense_payees|safe }}]
+                        },
+                        rotated: true,
+                    },
+                    bar: {
+                        width: 20
+                    },
+                    legend: {
+                        show: false, //hide legend
+                    },
+                    padding: {
+                        bottom: 0,
+                        top: 0
+                    },
+                    tooltip: {
+                       format: {
+                           value: function (value, ratio, id) {
+                               var format = d3.format(',');
+                               return format(value);
+                           }
+                //            value: d3.format(',') // apply this format to both y and y2
+                       }
+                   }
+                });
+            });
+        });
+        </script>
+    </div>
+
+
+    <div class="col-lg-12 col-xl-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Total</h3>
+            </div>
+            <div class="card-body">
+                <div id="chart-bar-rotated-total"></div>
+            </div>
+        </div>
+        <script>
+        require(['c3', 'jquery'], function(c3, $) {
+            $(document).ready(function(){
+                var chart = c3.generate({
+                    bindto: '#chart-bar-rotated-total', // id of chart wrapper
+                    size: {
+                        height: 400
+                    },
+                    data: {
+                        columns: [
+                            // each columns data
+                            ['data1', {{ total_amounts }}],
+                        ],
+                        type: 'bar', // default type of chart
+                        colors: {
+                            'data1': tabler.colors["green"],
+                        },
+                        names: {
+                            // name of each serie
+                            'data1': 'Expense',
+                        }
+                    },
+                    axis: {
+                        x: {
+                            type: 'category',
+                            // name of each category
+                            categories: [{{ total_payees|safe }}]
+                        },
+                        rotated: true,
+                    },
+                    bar: {
+                        width: 20
+                    },
+                    legend: {
+                        show: false, //hide legend
+                    },
+                    padding: {
+                        bottom: 0,
+                        top: 0
+                    },
+                    tooltip: {
+                       format: {
+                           value: function (value, ratio, id) {
+                               var format = d3.format(',');
+                               return format(value);
+                           }
+                //            value: d3.format(',') // apply this format to both y and y2
+                       }
+                   }
+                });
+            });
+        });
+        </script>
+    </div>
+
+</div>
+
+{% endblock %}

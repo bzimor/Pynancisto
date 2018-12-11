@@ -9839,7 +9839,7 @@ a.text-dark:hover, a.text-dark:focus {
   .table, .text-wrap table {
     border-collapse: collapse !important;
   }
-  
+
   .table td,
   .text-wrap table td, .table th, .text-wrap table th {
     background-color: #fff !important;
@@ -18607,4 +18607,20 @@ svg {
 
 .fe-zoom-out:before {
   content: "\ea06";
+}
+
+table.monthly th:first-child, table.monthly td:first-child
+{
+  position:sticky;
+  left:0px;
+}
+
+table.monthly th:first-child, table.monthly td:first-child
+{
+ background-color:#eff0f1;
+}
+
+table.monthly tr {
+   line-height: 10px;
+   /* height: 35px; */
 }
