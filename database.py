@@ -38,6 +38,7 @@ def createTables():
     title text,
     last_category_id long not null default 0,
     remote_key text,
+    is_active integer not null default 0,
     updated_on TIMESTAMP DEFAULT 0);
 
     CREATE TABLE if not exists category (
@@ -50,6 +51,7 @@ def createTables():
     sort_order integer not null default 0,
     type integer not null default 0,
     remote_key text,
+    is_active integer not null default 0,
     updated_on TIMESTAMP DEFAULT 0);
 
 
@@ -141,6 +143,7 @@ def createTables():
     group_separator text,
     symbol_format text not null default 'RS',
     remote_key text,
+    is_active integer not null default 0,
     updated_on TIMESTAMP DEFAULT 0);
 
 
